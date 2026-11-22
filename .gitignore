@@ -3,3 +3,6 @@ node_modules/
 *.key
 *wallet*.json
 transcripts*.tar.gz
+
+.bench/
+benchmark.mjs
