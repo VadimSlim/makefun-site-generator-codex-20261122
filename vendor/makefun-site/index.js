@@ -145,15 +145,25 @@ function collections(b) {
 /** 6. The tags: grouped by their slug, each named as first met in the posts' order, ordered by count and then slug. */
 function tags(b) {
   const bySlug = new Map();
+  // Tag names recur across posts. Keep normalization local to this build.
+  const slugs = new Map();
+  const tagSlug = (name) => {
+    let slug = slugs.get(name);
+    if (slug === undefined) {
+      slug = slugify(name);
+      slugs.set(name, slug);
+    }
+    return slug;
+  };
   /** A source's tags, each slug once, in its own order. */
   const ownTags = (s) => {
     const seen = new Set();
-    return (s.data.tags ?? []).filter((name) => !seen.has(slugify(name)) && seen.add(slugify(name)));
+    return (s.data.tags ?? []).filter((name) => !seen.has(tagSlug(name)) && seen.add(tagSlug(name)));
   };
   for (const p of b.posts) {
     p.tagRefs = [];
     for (const name of ownTags(p)) {
-      const slug = slugify(name);
+      const slug = tagSlug(name);
       if (!bySlug.has(slug)) bySlug.set(slug, { name, slug, url: `${b.base}/tags/${slug}/`, posts: [] });
       const tag = bySlug.get(slug);
       tag.posts.push(p);
@@ -161,7 +171,7 @@ function tags(b) {
     }
   }
   // A page's tags link to the posts' tag of the same slug, and to nothing (url "") where no post has it.
-  for (const s of b.sources) if (!s.post) s.tagRefs = ownTags(s).map((name) => bySlug.get(slugify(name)) ?? { name, slug: slugify(name), url: '', posts: [] });
+  for (const s of b.sources) if (!s.post) s.tagRefs = ownTags(s).map((name) => bySlug.get(tagSlug(name)) ?? { name, slug: tagSlug(name), url: '', posts: [] });
   b.tags = [...bySlug.values()].sort((x, y) => y.posts.length - x.posts.length || byCodeUnits(x.slug, y.slug));
 }
 

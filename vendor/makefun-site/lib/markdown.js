@@ -184,8 +184,11 @@ export function inline(s, env) {
       i++;
       continue;
     }
-    out += escapeHtml(c);
-    i++;
+    // Ordinary text has no inline syntax. Escape a whole run at once instead
+    // of allocating a replacement operation and a string for every character.
+    const start = i++;
+    while (i < s.length && s[i] !== '\\' && s[i] !== '`' && s[i] !== '*' && s[i] !== '[') i++;
+    out += escapeHtml(s.slice(start, i));
   }
   return out;
 }
